@@ -1,0 +1,34 @@
+{
+  "id": "pm-sym",
+  "name": "Pradhan Mantri Shram Yogi Maan-dhan (PM-SYM)",
+  "category": "Social Security & Health",
+  "ministry": "Ministry of Labour and Employment",
+  "benefit_amount": "₹3,000 / month Guaranteed Pension",
+  "benefit_summary": "Guaranteed minimum monthly pension of ₹3,000 upon attaining 60 years of age, with 50% matching co-contribution by the Central Government.",
+  "who_can_apply_intro": "All eligible citizens who meet the Pradhan Mantri Shram Yogi Maan-dhan (PM-SYM) guidelines.",
+  "required_documents": [
+    "Aadhaar Card",
+    "Savings Bank Account Passbook or Jan Dhan Account",
+    "Mobile Number",
+    "Self-declaration of unorganized worker status"
+  ],
+  "application_steps": [
+    "Check that your Aadhaar card and active bank passbook are ready.",
+    "Visit the official portal or your local Common Service Centre (CSC) / Panchayat office.",
+    "Fill in the application details and complete your biometric or OTP e-KYC.",
+    "Receive your application reference number to track verification and direct payment status."
+  ],
+  "eligibility_templates": {
+    "age_met": "Your age ({age}) meets the required age criteria.",
+    "age_unmet": "Age ({age}) does not meet the scheme criteria (Min: {min}, Max: {max}).",
+    "occupation_met": "Your occupation ({occupation}) is eligible for this scheme.",
+    "occupation_unmet": "This scheme is specifically designed for {eligible_occupations}.",
+    "income_met": "Your family income (₹{income}) is within the eligible limit.",
+    "income_unmet": "Annual income exceeds the maximum threshold of ₹{max_income}.",
+    "land_met": "Your cultivable land holding ({acres} acres) is within the eligible limit.",
+    "land_unknown": "Please confirm whether you or your family own cultivable agricultural land.",
+    "bpl_met": "BPL / Low-income family criterion met.",
+    "state_met": "Applicable in your state ({state}).",
+    "gender_met": "Eligible for your gender profile."
+  }
+}

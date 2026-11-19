@@ -1,0 +1,174 @@
+@import "tailwindcss";
+
+@variant dark (&:where(.dark, .dark *));
+
+:root {
+  /* Modern Indian Civic AI Design Tokens (Light Theme Primary) */
+  --bg-canvas: #f8fafc;
+  --bg-surface: #ffffff;
+  --bg-surface-elevated: #ffffff;
+  --bg-muted: #f1f5f9;
+  --bg-subtle: #f8fafc;
+
+  --border-subtle: #e2e8f0;
+  --border-medium: #cbd5e1;
+  --border-strong: #94a3b8;
+
+  --text-primary: #0f172a;
+  --text-secondary: #334155;
+  --text-muted: #64748b;
+  --text-subtle: #94a3b8;
+
+  /* Brand Colors: Deep Navy Trust + Restrained Saffron Accent */
+  --brand-navy: #0e2040;
+  --brand-navy-light: #162f5c;
+  --brand-navy-subtle: #eff6ff;
+
+  --brand-saffron: #d9531e;
+  --brand-saffron-hover: #bf4313;
+  --brand-saffron-subtle: #fff7ed;
+
+  /* Semantic State Colors */
+  --status-eligible: #15803d;
+  --status-eligible-bg: #f0fdf4;
+  --status-eligible-border: #bbf7d0;
+
+  --status-pending: #b45309;
+  --status-pending-bg: #fffbeb;
+  --status-pending-border: #fde68a;
+
+  --status-ineligible: #b91c1c;
+  --status-ineligible-bg: #fef2f2;
+  --status-ineligible-border: #fecaca;
+}
+
+.dark {
+  --bg-canvas: #0b1120;
+  --bg-surface: #111a2e;
+  --bg-surface-elevated: #16223b;
+  --bg-muted: #1e293b;
+  --bg-subtle: #0f172a;
+
+  --border-subtle: #1e293b;
+  --border-medium: #334155;
+  --border-strong: #475569;
+
+  --text-primary: #f8fafc;
+  --text-secondary: #cbd5e1;
+  --text-muted: #94a3b8;
+  --text-subtle: #64748b;
+
+  --brand-navy: #162f5c;
+  --brand-navy-light: #254b8c;
+  --brand-navy-subtle: #0f2244;
+
+  --brand-saffron: #f97316;
+  --brand-saffron-hover: #ea580c;
+  --brand-saffron-subtle: #2d1808;
+
+  --status-eligible: #22c55e;
+  --status-eligible-bg: #052e16;
+  --status-eligible-border: #166534;
+
+  --status-pending: #f59e0b;
+  --status-pending-bg: #451a03;
+  --status-pending-border: #92400e;
+
+  --status-ineligible: #f87171;
+  --status-ineligible-bg: #450a0a;
+  --status-ineligible-border: #991b1b;
+}
+
+/* Standard 16px Base Font Size for Tight, Readable Mobile Typography */
+html {
+  font-size: 16px;
+}
+
+body {
+  background-color: var(--bg-canvas);
+  color: var(--text-primary);
+  font-family: var(--font-noto-sans), var(--font-noto-devanagari), var(--font-noto-bengali), var(--font-noto-tamil), 'Noto Sans', 'Noto Sans Devanagari', 'Noto Sans Bengali', 'Noto Sans Tamil', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  line-height: 1.5;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  overflow-x: hidden;
+}
+
+/* Page Transition: Mild 220ms Horizontal Slide & Fade-In */
+@keyframes pageSlideIn {
+  0% {
+    opacity: 0;
+    transform: translate3d(24px, 0, 0);
+  }
+  100% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+.page-transition-enter {
+  animation: pageSlideIn 220ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  will-change: transform, opacity;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .page-transition-enter {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* 48px minimum touch target utility */
+.touch-target {
+  min-height: 48px;
+  min-width: 48px;
+}
+
+/* Safe area bottom padding for fixed bottom bar */
+.pb-safe-bottom {
+  padding-bottom: calc(4.75rem + env(safe-area-inset-bottom, 0px));
+}
+
+/* Linear-grade focus styling */
+:focus-visible {
+  outline: 2px solid #2563eb;
+  outline-offset: 2px;
+}
+
+/* Subtle civic card pattern */
+.civic-grid-pattern {
+  background-image: radial-gradient(rgba(14, 32, 64, 0.04) 1px, transparent 1px);
+  background-size: 20px 20px;
+}
+
+.dark .civic-grid-pattern {
+  background-image: radial-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+}
+
+/* Custom Scrollbar for High Information Density */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.4);
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(148, 163, 184, 0.7);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

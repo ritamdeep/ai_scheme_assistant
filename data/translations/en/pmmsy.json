@@ -1,0 +1,34 @@
+{
+  "id": "pmmsy",
+  "name": "Pradhan Mantri Matsya Sampada Yojana (PMMSY)",
+  "category": "Agriculture & Farming",
+  "ministry": "Ministry of Fisheries, Animal Husbandry and Dairying",
+  "benefit_amount": "40% - 60% Project Cost Subsidy",
+  "benefit_summary": "Subsidies up to 40% (General) to 60% (Women, SC, ST) for modern fishing craft, safety gear, biofloc, cold storage, and aquaculture.",
+  "who_can_apply_intro": "All eligible citizens who meet the Pradhan Mantri Matsya Sampada Yojana (PMMSY) guidelines.",
+  "required_documents": [
+    "Aadhaar Card",
+    "Fisherman Registration ID / Coastal Biometric Card",
+    "Bank Account details",
+    "Pond Lease or Ownership Document (if aquaculture)"
+  ],
+  "application_steps": [
+    "Check that your Aadhaar card and active bank passbook are ready.",
+    "Visit the official portal or your local Common Service Centre (CSC) / Panchayat office.",
+    "Fill in the application details and complete your biometric or OTP e-KYC.",
+    "Receive your application reference number to track verification and direct payment status."
+  ],
+  "eligibility_templates": {
+    "age_met": "Your age ({age}) meets the required age criteria.",
+    "age_unmet": "Age ({age}) does not meet the scheme criteria (Min: {min}, Max: {max}).",
+    "occupation_met": "Your occupation ({occupation}) is eligible for this scheme.",
+    "occupation_unmet": "This scheme is specifically designed for {eligible_occupations}.",
+    "income_met": "Your family income (₹{income}) is within the eligible limit.",
+    "income_unmet": "Annual income exceeds the maximum threshold of ₹{max_income}.",
+    "land_met": "Your cultivable land holding ({acres} acres) is within the eligible limit.",
+    "land_unknown": "Please confirm whether you or your family own cultivable agricultural land.",
+    "bpl_met": "BPL / Low-income family criterion met.",
+    "state_met": "Applicable in your state ({state}).",
+    "gender_met": "Eligible for your gender profile."
+  }
+}

@@ -1,0 +1,35 @@
+{
+  "id": "pm-usp-scholarship",
+  "name": "PM-USP Central Sector Scheme of Scholarship for College and University Students",
+  "category": "Education & Youth",
+  "ministry": "Ministry of Education",
+  "benefit_amount": "₹12,000 to ₹20,000 / year",
+  "benefit_summary": "Financial scholarship of ₹12,000/year for undergraduate degrees and ₹20,000/year for postgraduate courses to meritorious students.",
+  "who_can_apply_intro": "All eligible citizens who meet the PM-USP Central Sector Scheme of Scholarship for College and University Students guidelines.",
+  "required_documents": [
+    "Aadhaar Card",
+    "Class 12th Marksheet showing percentile",
+    "Income Certificate (family income <= 4.5 Lakhs)",
+    "College Admission Receipt / Bonafide Student Certificate",
+    "Bank Account details"
+  ],
+  "application_steps": [
+    "Check that your Aadhaar card and active bank passbook are ready.",
+    "Visit the official portal or your local Common Service Centre (CSC) / Panchayat office.",
+    "Fill in the application details and complete your biometric or OTP e-KYC.",
+    "Receive your application reference number to track verification and direct payment status."
+  ],
+  "eligibility_templates": {
+    "age_met": "Your age ({age}) meets the required age criteria.",
+    "age_unmet": "Age ({age}) does not meet the scheme criteria (Min: {min}, Max: {max}).",
+    "occupation_met": "Your occupation ({occupation}) is eligible for this scheme.",
+    "occupation_unmet": "This scheme is specifically designed for {eligible_occupations}.",
+    "income_met": "Your family income (₹{income}) is within the eligible limit.",
+    "income_unmet": "Annual income exceeds the maximum threshold of ₹{max_income}.",
+    "land_met": "Your cultivable land holding ({acres} acres) is within the eligible limit.",
+    "land_unknown": "Please confirm whether you or your family own cultivable agricultural land.",
+    "bpl_met": "BPL / Low-income family criterion met.",
+    "state_met": "Applicable in your state ({state}).",
+    "gender_met": "Eligible for your gender profile."
+  }
+}

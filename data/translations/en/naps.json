@@ -1,0 +1,34 @@
+{
+  "id": "naps",
+  "name": "National Apprenticeship Promotion Scheme (NAPS)",
+  "category": "Jobs & Employment",
+  "ministry": "Ministry of Skill Development and Entrepreneurship",
+  "benefit_amount": "Up to ₹1,500/month Govt Stipend Support",
+  "benefit_summary": "25% stipend support (up to ₹1,500/month) paid directly to apprentices by Government of India, plus national on-the-job industrial skill training.",
+  "who_can_apply_intro": "All eligible citizens who meet the National Apprenticeship Promotion Scheme (NAPS) guidelines.",
+  "required_documents": [
+    "Aadhaar Card",
+    "Educational Certificate / ITI Marksheet",
+    "Aadhaar-linked Bank Account details",
+    "Resume / Bio-data"
+  ],
+  "application_steps": [
+    "Check that your Aadhaar card and active bank passbook are ready.",
+    "Visit the official portal or your local Common Service Centre (CSC) / Panchayat office.",
+    "Fill in the application details and complete your biometric or OTP e-KYC.",
+    "Receive your application reference number to track verification and direct payment status."
+  ],
+  "eligibility_templates": {
+    "age_met": "Your age ({age}) meets the required age criteria.",
+    "age_unmet": "Age ({age}) does not meet the scheme criteria (Min: {min}, Max: {max}).",
+    "occupation_met": "Your occupation ({occupation}) is eligible for this scheme.",
+    "occupation_unmet": "This scheme is specifically designed for {eligible_occupations}.",
+    "income_met": "Your family income (₹{income}) is within the eligible limit.",
+    "income_unmet": "Annual income exceeds the maximum threshold of ₹{max_income}.",
+    "land_met": "Your cultivable land holding ({acres} acres) is within the eligible limit.",
+    "land_unknown": "Please confirm whether you or your family own cultivable agricultural land.",
+    "bpl_met": "BPL / Low-income family criterion met.",
+    "state_met": "Applicable in your state ({state}).",
+    "gender_met": "Eligible for your gender profile."
+  }
+}

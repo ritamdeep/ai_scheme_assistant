@@ -1,0 +1,19 @@
+{
+  "name": "SEVA.AI — National Scheme Assistant",
+  "short_name": "SEVA.AI",
+  "description": "Multilingual Citizen Government Scheme Assistant for Indian Welfare Benefits",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0E2040",
+  "theme_color": "#0E2040",
+  "lang": "en",
+  "icons": [
+    {
+      "src": "/favicon.ico",
+      "sizes": "64x64 32x32 24x24 16x16",
+      "type": "image/x-icon"
+    }
+  ],
+  "categories": ["government", "productivity", "utilities"]
+}
