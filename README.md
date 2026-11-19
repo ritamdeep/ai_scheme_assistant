@@ -1,64 +1,165 @@
-# SEVA.AI (Scheme Eligibility & Verification Assistant)
+# SEVA.AI: National Scheme Assistant
 
-> [!IMPORTANT]
-> **TRANSLATIONS REVIEW NOTICE FOR CIVIC / REAL-WORLD USE:**
-> Static welfare scheme translations in this project (`data/translations/{lang}/{schemeId}.json`) were generated using Google Gemini with simple Grade-5 reading-level instructions for Indian citizens. All numbers, currency amounts (₹), scheme acronyms, and official URLs have been preserved unchanged. **Before deploying for real-world civic administration or official use, all translations in Hindi (हिन्दी), Bengali (বাংলা), and Tamil (தமிழ்) must be reviewed and certified by native human speakers.**
+> A mobile-first, multilingual civic assistant that helps Indian citizens discover government welfare schemes, check preliminary eligibility, and receive clear answers in their native language.
+
+Live Demo: `[Deployment Link Pending]`
 
 ---
 
-## 4 Supported Languages & Typography
+## The Problem & Target Audience
 
-SEVA.AI officially supports 4 Indian languages:
-- **English** (`en-IN`) — Latin script
-- **Hindi** (`hi-IN`) — Devanagari script (`Noto_Sans_Devanagari`)
-- **Bengali** (`bn-IN`) — Bengali script (`Noto_Sans_Bengali`)
-- **Tamil** (`ta-IN`) — Tamil script (`Noto_Sans_Tamil`)
+Information about central government welfare schemes is scattered across multiple departments and typically published in complex bureaucratic English or Hindi. This creates significant access barriers for rural families, informal workers, and regional-language speakers who are often the most eligible beneficiaries. SEVA.AI is built for citizens, common service center (CSC) operators, and community volunteers seeking simple, grade-5 reading level scheme guidance in English, Hindi, Bengali, or Tamil.
 
-Fonts are loaded with `next/font/google` and configured with CSS variables to ensure zero layout shifting and seamless rendering across all 4 scripts without text clipping at 360px viewport width.
+---
 
-### TTS Fallback Chain (`lib/speech.ts` & `app/api/tts/route.ts`)
-1. **Browser SpeechSynthesis**: Automatically listens for `voiceschanged` and maps to installed browser voices (`en-IN`, `hi-IN`, `bn-IN`, `ta-IN`, `te-IN`, `as-IN`). Long utterances are chunked by punctuation to avoid browser speech cutoff.
-2. **Server-Side TTS Route (`POST /api/tts`)**: If no local voice is installed on the user's OS/browser, falls back to Google Gemini TTS (`gemini-3.8-flash-lite-tts` and `gemini-3.8-flash-tts`) via the Google Interactions API.
-3. **Bhashini TTS Fallback**: If `BHASHINI_API_KEY` and `BHASHINI_USER_ID` are configured in `.env.local`, the server can fall back to Government of India's Bhashini pipeline.
-4. **Disk & In-Memory Caching**: Audio output is cached in `.cache/tts/` and in memory by SHA-256 hash of `(lang + text)` so repeated playback uses zero quota.
-5. **Graceful Notification**: If every method is unavailable or rate-limited on the device, a native-script alert is shown: `"Audio is not available for this language on your device."` while translated text remains visible on screen.
+## Key Features
 
-### STT Voice Input (`components/VoiceSchemeQuestionCard.tsx` & `app/api/transcribe/route.ts`)
-1. **Web Speech API**: Uses `SpeechRecognition` with the active language code where supported by the browser.
-2. **Server-Side Gemini Transcription Fallback**: If `SpeechRecognition` is unsupported (e.g. for regional languages on desktop Chrome), audio is captured via `MediaRecorder` and sent to `POST /api/transcribe` for verbatim transcription with Gemini.
+- **4 Supported Languages:** English (`en-IN`), Hindi (`hi-IN`), Bengali (`bn-IN`), and Tamil (`ta-IN`) with script-native Noto Sans fonts and mobile viewport layout tested at 360px width.
+- **5-Question Eligibility Wizard:** Rapid questionnaire covering residence, occupation, age, gender, and family income to compute preliminary eligibility.
+- **Deterministic Rule Engine:** Completely separated rule-based logic (`lib/rule-engine.ts`) with mathematical threshold checks on age limits, income ceilings, landholding acreage, and occupation categories.
+- **Grounded Multilingual Chat:** RAG retrieval across 15 curated central welfare schemes returning validated, structured responses (summary, financial benefits, document checklist, actionable next steps, and official application URLs).
+- **Language & Script Detection:** Automatic Unicode character analysis for regional scripts and phonetic Hinglish input translation to Devanagari Hindi.
+- **Audio & Voice Capabilities:** Web Speech recognition for voice input, server-side audio transcription fallback, and static `<audio>` playback for pre-generated scheme narrations.
+- **Category Browsing & Bookmarks:** Direct browsing by citizen category (Farmers, Students, Health, Jobs, Business, Housing) without unsolicited badges, plus local bookmarking.
+- **Mobile-First Experience:** 100dvh splash screen, fixed navigation with 48px touch targets, system-based dark mode, and reduced-motion compliant transitions.
+
+---
+
+## How It Works
+
+SEVA.AI separates factual conversational assistance from eligibility calculation:
+
+1. **Eligibility Engine (Deterministic):** User responses from the 5-question wizard are passed directly into the rule engine. The engine evaluates criteria against statutory constraints without using an LLM, generating transparent verdicts: *Eligible*, *Needs More Info*, or *Not Eligible*.
+2. **Assistant & RAG Pipeline (Grounded LLM):** Chat queries are identified by language script. The relevant sections from the 15 indexed schemes are retrieved via tokenized term-frequency cosine similarity. The retrieved context and citizen profile are packaged into a grounded system prompt for Google Gemini, which generates structured JSON answers. Responses are cached in-memory by language and query to minimize API latency.
+
+```mermaid
+flowchart TD
+    User["Citizen Input / Voice"] --> InputType{"Input Channel"}
+
+    subgraph EligibilityTrack ["1. Eligibility Assessment (Deterministic Engine)"]
+        InputType -->|"5-Question Wizard"| Profile["Citizen Profile State"]
+        Profile --> RuleEngine["Rule Engine (lib/rule-engine.ts)"]
+        RuleEngine --> Verdict["Verdicts: Eligible / Needs More Info / Not Eligible"]
+    end
+
+    subgraph ChatTrack ["2. Multilingual Assistant (RAG + LLM)"]
+        InputType -->|"Chat Inquiry"| LangDetect["Script & Language Detection"]
+        LangDetect --> Cache{"In-Memory Cache"}
+        Cache -->|"Cache Hit"| CachedResponse["Instant Cached Response"]
+        Cache -->|"Cache Miss"| RAG["Cosine Similarity Knowledge Retrieval"]
+        RAG --> LLM["Google Gemini API (Primary / Fallback)"]
+        LLM --> Parser["Structured JSON Validator"]
+        Parser --> ChatUI["Formatted Cards, Checklists & Portal Links"]
+    end
+```
+
+---
+
+## Tech Stack & Project Structure
+
+### Tech Stack
+- **Framework:** Next.js 16 (App Router, Webpack configuration)
+- **UI & Styling:** React 19, Tailwind CSS v4, Lucide React
+- **AI & Reasoning:** Google Gen AI SDK (`@google/genai` with `gemini-3.8-flash` & `gemini-3.5-flash-lite`)
+- **Text Rendering:** `react-markdown`, `remark-gfm`
+- **Testing:** `tsx`, TypeScript verification suite
+
+### Project Structure
+```text
+├── app/
+│   ├── api/                 # API routes (chat, tts, transcribe, fuzzy-match, health)
+│   ├── chat/                # Ask SEVA AI conversational interface
+│   ├── dashboard/           # Scheme catalog & category browsing
+│   ├── find-schemes/        # 5-question eligibility wizard
+│   ├── language/            # Native-script language picker
+│   ├── saved/               # Bookmarked schemes
+│   ├── scheme/[id]/         # Detailed scheme view with requirements checklist
+│   ├── layout.tsx           # Root layout, splash screen, theme wrapper
+│   └── page.tsx             # Home screen with category tiles
+├── components/              # Shared UI components (SchemeCard, TopHeader, BottomNav)
+├── data/
+│   └── translations/        # Pre-generated Grade-5 scheme translations (en, hi, bn, ta)
+├── lib/
+│   ├── rule-engine.ts       # Deterministic eligibility evaluation engine
+│   ├── rag.ts               # Semantic chunk retrieval and fuzzy matching
+│   ├── gemini.ts            # LLM prompts, structured parsing, Hinglish handling
+│   ├── schemes-data.ts      # Curated corpus of 15 central government schemes
+│   └── speech.ts            # Speech synthesis and audio management
+├── public/
+│   └── audio/               # Pre-rendered static MP3 files for zero-latency audio
+└── scripts/
+    ├── test-engine.ts       # 6-step rule engine verification suite
+    ├── translate-schemes.ts # Offline scheme translation generator
+    └── generate-audio.ts    # Offline static TTS audio generator
+```
+
+---
+
+## Getting Started
+
+### Prerequisites
+- Node.js 20+ installed
+- A Google Gemini API key from [Google AI Studio](https://aistudio.google.com/app/apikey)
+
+### Installation
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/ritamdeep/ai_scheme_assistant.git
+   cd ai_scheme_assistant
+   ```
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+3. Set up environment variables:
+   ```bash
+   cp .env.example .env.local
+   ```
+   Add your `GEMINI_API_KEY` into `.env.local`.
+4. Run the development server:
+   ```bash
+   npm run dev
+   ```
+5. Open [http://localhost:3000](http://localhost:3000) in your browser.
+
+### Test Engine Verification
+Run the automated rule engine and RAG verification test suite:
+```bash
+npm run test:engine
+```
 
 ---
 
 ## Environment Variables
 
-Configure the following variables in `.env.local`:
-
-```bash
-# Google Gemini API Key (Required for RAG synthesis, TTS fallback, and Voice transcription)
-GEMINI_API_KEY=your_gemini_api_key
-
-# Optional: Groq API Key (alternative LLM provider)
-GROQ_API_KEY=your_groq_api_key
-
-# Optional: Government of India Bhashini API (for secondary TTS fallback)
-BHASHINI_API_KEY=your_bhashini_api_key
-BHASHINI_USER_ID=your_bhashini_user_id
-```
+| Variable | Required | Description |
+| :--- | :---: | :--- |
+| `GEMINI_API_KEY` | **Yes** | Google Gemini API key for chat synthesis and voice transcription |
+| `GEMINI_MODEL` | No | Primary chat model (Default: `gemini-3.8-flash`) |
+| `GEMINI_FALLBACK_MODEL` | No | Fallback model for rate limit recovery (Default: `gemini-3.5-flash-lite`) |
+| `GEMINI_EMBEDDING_MODEL` | No | Embedding model for semantic retrieval (Default: `gemini-embedding-001`) |
+| `GEMINI_TTS_MODEL` | No | Text-to-speech model for audio generation script (Default: `gemini-3.8-flash-lite-tts`) |
+| `GROQ_API_KEY` | No | Optional secondary LLM provider fallback |
+| `BHASHINI_API_KEY` | No | Optional Digital India Bhashini API key for speech synthesis |
+| `BHASHINI_USER_ID` | No | Optional Digital India Bhashini user ID |
 
 ---
 
-## Development & Verification
+## Disclaimer
 
-```bash
-# Run local development server
-npm run dev
+This is an independent, unofficial personal project developed for a hackathon demonstration. It is not affiliated with, endorsed by, or connected to the Government of India, the National Informatics Centre (NIC), or myscheme.gov.in. Information provided by SEVA.AI is for preliminary informational guidance only. Citizens should always verify specific eligibility terms and apply through official department portals or local administrative offices. Regional language translations are generated with artificial intelligence and should be reviewed by native human speakers before official administrative adoption.
 
-# Run comprehensive rule engine & RAG tests (6/6 tests)
-npm run test:engine
+---
 
-# Regenerate static scheme translations
-npx tsx scripts/translate-schemes.ts
+## Known Limitations & Future Work
 
-# Production build
-npm run build
-```
+- **Curated Dataset:** Current demonstration corpus contains 15 representative central welfare schemes; expanding to comprehensive state and central schemes is planned.
+- **Additional Languages:** Planned expansion beyond English, Hindi, Bengali, and Tamil to include Telugu, Marathi, Gujarati, Kannada, Odia, and Assamese.
+- **Verified Identity:** Integration with DigiLocker or Aadhaar paperless offline e-KYC for certified eligibility checks.
+- **Offline Mode:** Expanding service worker caching into an offline SQLite database for low-connectivity rural areas.
+
+---
+
+## Author
+
+Created by **Ritam** ([@ritamdeep](https://github.com/ritamdeep))
