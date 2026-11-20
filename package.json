@@ -12,6 +12,10 @@
     "translate:schemes": "tsx scripts/translate-schemes.ts"
   },
   "dependencies": {
+    "@fontsource/noto-sans": "^5.3.0",
+    "@fontsource/noto-sans-bengali": "^5.3.0",
+    "@fontsource/noto-sans-devanagari": "^5.3.0",
+    "@fontsource/noto-sans-tamil": "^5.3.0",
     "@google/genai": "^2.21.0",
     "clsx": "^2.1.1",
     "firebase": "^12.18.0",

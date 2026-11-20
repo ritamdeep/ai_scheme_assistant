@@ -3,6 +3,12 @@
 @variant dark (&:where(.dark, .dark *));
 
 :root {
+  /* Font Family Variables (Loaded locally via @fontsource) */
+  --font-noto-sans: 'Noto Sans', sans-serif;
+  --font-noto-devanagari: 'Noto Sans Devanagari', sans-serif;
+  --font-noto-bengali: 'Noto Sans Bengali', sans-serif;
+  --font-noto-tamil: 'Noto Sans Tamil', sans-serif;
+
   /* Modern Indian Civic AI Design Tokens (Light Theme Primary) */
   --bg-canvas: #f8fafc;
   --bg-surface: #ffffff;

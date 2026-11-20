@@ -77,7 +77,7 @@ export async function POST(req: NextRequest) {
 
     const ttsCandidateModels = [
       process.env.GEMINI_TTS_MODEL || 'gemini-3.8-flash-lite-tts',
-      process.env.GEMINI_FALLBACK_MODEL || 'gemini-3.5-flash-lite',
+      process.env.GEMINI_TTS_FALLBACK_MODEL || 'gemini-3.8-flash-tts',
     ].filter(Boolean);
     let audioBuffer: Buffer | null = null;
     let ttsSource = 'gemini-tts';

@@ -95,7 +95,8 @@ class SpeechManager {
   private state: SpeechState = 'idle';
   private activeId: string | null = null;
   private activeSectionId: string | null = null;
-  private currentAudioElement: HTMLAudioElement | null = null;
+  // Reusable single Audio element to satisfy iOS Safari user-gesture autoplay policies
+  private sharedAudio: HTMLAudioElement | null = null;
   private listeners: Set<StateListener> = new Set();
   private isBrowserSpeech = false;
   private sectionQueue: SpeechSection[] = [];
@@ -115,6 +116,35 @@ class SpeechManager {
       SpeechManager.instance = new SpeechManager();
     }
     return SpeechManager.instance;
+  }
+
+  /**
+   * Lazily creates or returns the single persistent Audio element.
+   */
+  private getOrCreateSharedAudio(): HTMLAudioElement | null {
+    if (typeof window === 'undefined') return null;
+    if (!this.sharedAudio) {
+      this.sharedAudio = new Audio();
+      this.sharedAudio.preload = 'auto';
+    }
+    return this.sharedAudio;
+  }
+
+  /**
+   * Synchronously primes and unlocks the single shared Audio element during a user gesture (tap/click).
+   * iOS Safari requires an Audio element to be triggered inside a direct user gesture handler.
+   * By playing a 1-sample silent WAV during the user tap, Safari unlocks this Audio instance
+   * for subsequent asynchronous plays (such as after fetch('/api/tts') or between queued sections).
+   */
+  private unlockAudio(): HTMLAudioElement | null {
+    const audio = this.getOrCreateSharedAudio();
+    if (audio) {
+      if (audio.paused && (!audio.src || audio.src.startsWith('data:'))) {
+        audio.src = 'data:audio/wav;base64,UklGRigAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQQAAAAAAA==';
+        audio.play().catch(() => {});
+      }
+    }
+    return audio;
   }
 
   public subscribe(listener: StateListener): () => void {
@@ -234,11 +264,14 @@ class SpeechManager {
       window.speechSynthesis.cancel();
     }
 
-    if (this.currentAudioElement) {
-      this.currentAudioElement.pause();
-      this.currentAudioElement.currentTime = 0;
-      this.currentAudioElement.src = '';
-      this.currentAudioElement = null;
+    if (this.sharedAudio) {
+      this.sharedAudio.pause();
+      this.sharedAudio.currentTime = 0;
+      this.sharedAudio.onplay = null;
+      this.sharedAudio.onpause = null;
+      this.sharedAudio.onended = null;
+      this.sharedAudio.onerror = null;
+      // Do not destroy this.sharedAudio instance so it stays unlocked on iOS Safari
     }
 
     this.state = 'idle';
@@ -253,8 +286,8 @@ class SpeechManager {
 
     if (this.isBrowserSpeech && typeof window !== 'undefined' && window.speechSynthesis) {
       window.speechSynthesis.pause();
-    } else if (this.currentAudioElement) {
-      this.currentAudioElement.pause();
+    } else if (this.sharedAudio) {
+      this.sharedAudio.pause();
     }
 
     this.state = 'paused';
@@ -266,8 +299,8 @@ class SpeechManager {
 
     if (this.isBrowserSpeech && typeof window !== 'undefined' && window.speechSynthesis) {
       window.speechSynthesis.resume();
-    } else if (this.currentAudioElement) {
-      this.currentAudioElement.play().catch((e) => console.warn('Audio resume failed', e));
+    } else if (this.sharedAudio) {
+      this.sharedAudio.play().catch((e) => console.warn('Audio resume failed', e));
     }
 
     this.state = 'playing';
@@ -285,6 +318,8 @@ class SpeechManager {
   ) {
     this.stop();
 
+    // Synchronously prime the shared Audio element inside the user's tap gesture
+    const audio = this.unlockAudio();
     const myToken = ++this.cancelToken;
     this.currentOptions = options;
     this.activeId = options.id || 'static-audio';
@@ -294,10 +329,7 @@ class SpeechManager {
     this.state = 'loading';
     this.notify();
 
-    if (typeof window === 'undefined') return;
-
-    const audio = new Audio(audioUrl);
-    this.currentAudioElement = audio;
+    if (!audio) return;
 
     audio.onplay = () => {
       if (myToken === this.cancelToken) {
@@ -322,8 +354,9 @@ class SpeechManager {
 
     audio.onerror = async () => {
       if (myToken !== this.cancelToken) return;
-      console.warn(`[SEVA AI Static Audio] Static audio not found at ${audioUrl}, trying browser speech fallback...`);
+      console.warn(`[SEVA AI Static Audio] Static audio not found at ${audioUrl}, trying fallback...`);
       if (options.fallbackText) {
+        // Fallback 1: Browser speech synthesis
         const voice = await this.getBrowserVoice(this.currentLangCode);
         if (myToken !== this.cancelToken) return;
         if (voice) {
@@ -333,11 +366,20 @@ class SpeechManager {
           this.playSectionsViaBrowser(voice, myToken);
           return;
         }
+
+        // Fallback 2: Server TTS via the same unlocked Audio element!
+        this.isBrowserSpeech = false;
+        this.sectionQueue = [{ id: 'fallback', text: options.fallbackText }];
+        this.currentSectionIndex = 0;
+        this.playSectionsViaServerTTS(myToken);
+        return;
       }
       this.handleFailure(myToken);
     };
 
     try {
+      audio.src = audioUrl;
+      audio.load();
       await audio.play();
     } catch (err) {
       if (myToken === this.cancelToken) {
@@ -355,12 +397,14 @@ class SpeechManager {
   ) {
     this.stop();
 
+    // Synchronously prime the shared Audio element inside the user's tap gesture
+    const audio = this.unlockAudio();
     const myToken = ++this.cancelToken;
     this.currentOptions = options;
     this.activeId = options.id || 'static-sections';
     this.currentLangCode = options.langCode || 'en-IN';
 
-    if (sections.length === 0) {
+    if (sections.length === 0 || !audio) {
       this.stop();
       return;
     }
@@ -383,9 +427,6 @@ class SpeechManager {
       this.notify();
       options.onSectionStart?.(sec.id);
       if (secIdx === 0) options.onStart?.();
-
-      const audio = new Audio(sec.audioUrl);
-      this.currentAudioElement = audio;
 
       audio.onplay = () => {
         if (myToken === this.cancelToken) {
@@ -414,8 +455,9 @@ class SpeechManager {
 
       audio.onerror = async () => {
         if (myToken !== this.cancelToken) return;
-        console.warn(`[SEVA AI Static Audio] Section audio not found at ${sec.audioUrl}, using browser speech fallback...`);
+        console.warn(`[SEVA AI Static Audio] Section audio not found at ${sec.audioUrl}, using fallback...`);
         if (sec.fallbackText) {
+          // Fallback 1: Browser speech synthesis
           const voice = await this.getBrowserVoice(this.currentLangCode);
           if (myToken !== this.cancelToken) return;
           if (voice) {
@@ -439,11 +481,48 @@ class SpeechManager {
             window.speechSynthesis.speak(utterance);
             return;
           }
+
+          // Fallback 2: Server TTS via the same unlocked Audio element!
+          try {
+            const res = await fetch('/api/tts', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                text: sec.fallbackText,
+                langCode: this.currentLangCode,
+              }),
+            });
+            if (myToken !== this.cancelToken) return;
+            if (res.ok) {
+              const blob = await res.blob();
+              if (myToken !== this.cancelToken) return;
+              const blobUrl = URL.createObjectURL(blob);
+              audio.src = blobUrl;
+              audio.onended = () => {
+                URL.revokeObjectURL(blobUrl);
+                if (myToken === this.cancelToken) {
+                  secIdx++;
+                  setTimeout(() => {
+                    if (myToken === this.cancelToken) {
+                      playNext();
+                    }
+                  }, 300);
+                }
+              };
+              audio.load();
+              await audio.play();
+              return;
+            }
+          } catch (tErr) {
+            console.warn('[SEVA AI Speech] Section TTS fallback failed:', tErr);
+          }
         }
         this.handleFailure(myToken);
       };
 
       try {
+        audio.src = sec.audioUrl;
+        audio.load();
         await audio.play();
       } catch (err) {
         if (myToken === this.cancelToken) {
@@ -469,6 +548,8 @@ class SpeechManager {
   public async speakSections(sections: SpeechSection[], options: SpeechOptions = {}) {
     this.stop();
 
+    // Synchronously prime the shared Audio element inside the user's tap gesture
+    this.unlockAudio();
     const myToken = ++this.cancelToken;
     this.currentOptions = options;
     this.activeId = options.id || 'speech';
@@ -610,8 +691,8 @@ class SpeechManager {
       if (token !== this.cancelToken) return;
 
       const audioUrl = URL.createObjectURL(blob);
-      const audio = new Audio(audioUrl);
-      this.currentAudioElement = audio;
+      const audio = this.getOrCreateSharedAudio();
+      if (!audio) return;
 
       audio.onplay = () => {
         if (token === this.cancelToken) {
@@ -638,6 +719,8 @@ class SpeechManager {
         this.handleFailure(token);
       };
 
+      audio.src = audioUrl;
+      audio.load();
       await audio.play();
     } catch (err: any) {
       console.warn('[SEVA AI Speech] Server TTS error:', err);

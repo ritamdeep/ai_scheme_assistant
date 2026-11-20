@@ -54,7 +54,14 @@ const TRANSLATIONS_DIR = path.join(process.cwd(), 'data', 'translations');
 
 // Gemini TTS models from environment variables
 const TTS_PRIMARY_MODEL = process.env.GEMINI_TTS_MODEL || 'gemini-3.8-flash-lite-tts';
-const TTS_FALLBACK_MODEL = process.env.GEMINI_FALLBACK_MODEL || 'gemini-3.5-flash-lite';
+const TTS_FALLBACK_MODEL = process.env.GEMINI_TTS_FALLBACK_MODEL || 'gemini-3.8-flash-tts';
+
+const SECTION_HEADERS: Record<string, { documents: string; howToApply: string }> = {
+  en: { documents: 'Required documents: ', howToApply: 'How to apply: ' },
+  hi: { documents: 'आवश्यक दस्तावेज: ', howToApply: 'आवेदन प्रक्रिया: ' },
+  bn: { documents: 'প্রয়োজনীয় কাগজপত্র: ', howToApply: 'আবেদন প্রক্রিয়া: ' },
+  ta: { documents: 'தேவையான ஆவணங்கள்: ', howToApply: 'விண்ணப்பிக்கும் முறை: ' },
+};
 
 function ensureDir(dir: string) {
   if (!fs.existsSync(dir)) {
@@ -93,7 +100,8 @@ function loadSchemeTranslation(lang: string, schemeId: string): any {
   };
 }
 
-function buildSectionText(section: SectionName, trans: any): string {
+function buildSectionText(section: SectionName, trans: any, langCode: string = 'en'): string {
+  const headers = SECTION_HEADERS[langCode] || SECTION_HEADERS.en;
   switch (section) {
     case 'card': {
       const summary = trans.benefit_summary ? trans.benefit_summary.slice(0, 140) : '';
@@ -120,13 +128,13 @@ function buildSectionText(section: SectionName, trans: any): string {
       const docs = Array.isArray(trans.required_documents)
         ? trans.required_documents.join('. ')
         : '';
-      return `Required documents: ${docs}`;
+      return `${headers.documents}${docs}`;
     }
     case 'howToApply': {
       const steps = Array.isArray(trans.application_steps)
         ? trans.application_steps.join('. ')
         : '';
-      return `How to apply: ${steps}`;
+      return `${headers.howToApply}${steps}`;
     }
   }
 }
@@ -135,8 +143,10 @@ async function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+const exhaustedModels = new Set<string>();
+
 async function generateTTSAudio(text: string, langCode: string): Promise<Buffer | null> {
-  const models = [TTS_PRIMARY_MODEL, TTS_FALLBACK_MODEL];
+  const models = [TTS_PRIMARY_MODEL, TTS_FALLBACK_MODEL].filter((m) => !exhaustedModels.has(m));
   const cleanText = text.trim();
 
   for (const model of models) {
@@ -175,14 +185,20 @@ async function generateTTSAudio(text: string, langCode: string): Promise<Buffer 
         }
       } else {
         const errJson = await res.json().catch(() => null);
+        const errMsg = errJson?.error?.message || JSON.stringify(errJson);
         console.warn(
           `  ⚠️ TTS API returned HTTP ${res.status} with model "${model}":`,
-          errJson?.error?.message || errJson
+          errMsg
         );
         if (res.status === 429) {
-          // Rate limit pause
-          console.log('  ⏳ Rate limited. Waiting 10 seconds before retry...');
-          await sleep(10000);
+          if (errMsg.includes('requests per day')) {
+            console.log(`  🚫 Model "${model}" daily quota exhausted. Skipping for remainder of run.`);
+            exhaustedModels.add(model);
+          } else {
+            // Per-minute rate limit pause
+            console.log('  ⏳ Rate limited. Waiting 12 seconds before retry...');
+            await sleep(12000);
+          }
         }
       }
     } catch (err: any) {
@@ -193,11 +209,16 @@ async function generateTTSAudio(text: string, langCode: string): Promise<Buffer 
   return null;
 }
 
-export async function generateAllAudio(limitPerLang?: number) {
+export async function generateAllAudio(limitPerLang?: number, targetLangs?: string[]) {
+  const activeLanguages = targetLangs && targetLangs.length > 0
+    ? LANGUAGES.filter((l) => targetLangs.includes(l.code.toLowerCase()))
+    : LANGUAGES;
+
   console.log('================================================================');
-  console.log('SEVA.AI STATIC AUDIO GENERATION FOR 4 LANGUAGES');
-  console.log(`Model: ${TTS_PRIMARY_MODEL} (Current Free-Tier GA)`);
-  console.log(`Languages: ${LANGUAGES.map((l) => `${l.name} [${l.code}]`).join(', ')}`);
+  console.log('SEVA.AI STATIC AUDIO GENERATION');
+  console.log(`Primary Model: ${TTS_PRIMARY_MODEL} (Current Free-Tier GA)`);
+  console.log(`Fallback Model: ${TTS_FALLBACK_MODEL}`);
+  console.log(`Languages: ${activeLanguages.map((l) => `${l.name} [${l.code}]`).join(', ')}`);
   console.log(`Total Schemes: ${SCHEMES_DATA.length}`);
   console.log(`Sections: ${SECTIONS.join(', ')}`);
   console.log('================================================================\n');
@@ -211,7 +232,7 @@ export async function generateAllAudio(limitPerLang?: number) {
     byLanguage: {} as Record<string, { success: number; failed: number }>,
   };
 
-  for (const lang of LANGUAGES) {
+  for (const lang of activeLanguages) {
     stats.byLanguage[lang.code] = { success: 0, failed: 0 };
     console.log(`\n▶ Processing Language: ${lang.name} [${lang.code}]...`);
 
@@ -234,7 +255,7 @@ export async function generateAllAudio(limitPerLang?: number) {
           continue;
         }
 
-        const text = buildSectionText(section, trans);
+        const text = buildSectionText(section, trans, lang.code);
         console.log(`  Generating audio: [${lang.code}] ${scheme.id}/${section}...`);
 
         const audioBuf = await generateTTSAudio(text, lang.code);
@@ -268,7 +289,29 @@ export async function generateAllAudio(limitPerLang?: number) {
 }
 
 if (require.main === module) {
-  // Allow passing an optional limit per language, e.g. "npm run generate:audio -- 2"
-  const limitArg = process.argv[2] ? parseInt(process.argv[2], 10) : undefined;
-  generateAllAudio(limitArg).catch(console.error);
+  // Support args: e.g. "tsx scripts/generate-audio.ts --langs bn,ta --limit 1"
+  // or "npm run generate:audio -- 2"
+  const args = process.argv.slice(2);
+  let limitArg: number | undefined;
+  let targetLangsArg: string[] | undefined;
+
+  for (let i = 0; i < args.length; i++) {
+    const arg = args[i];
+    if (arg === '--langs' && args[i + 1]) {
+      targetLangsArg = args[i + 1].split(',').map((s) => s.trim().toLowerCase());
+      i++;
+    } else if (arg === '--limit' && args[i + 1]) {
+      limitArg = parseInt(args[i + 1], 10);
+      i++;
+    } else if (!isNaN(parseInt(arg, 10)) && limitArg === undefined) {
+      limitArg = parseInt(arg, 10);
+    }
+  }
+
+  // Also support env var TARGET_LANGS
+  if (!targetLangsArg && process.env.TARGET_LANGS) {
+    targetLangsArg = process.env.TARGET_LANGS.split(',').map((s) => s.trim().toLowerCase());
+  }
+
+  generateAllAudio(limitArg, targetLangsArg).catch(console.error);
 }

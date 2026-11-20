@@ -1,10 +1,25 @@
 import type { Metadata, Viewport } from 'next';
-import {
-  Noto_Sans,
-  Noto_Sans_Devanagari,
-  Noto_Sans_Bengali,
-  Noto_Sans_Tamil,
-} from 'next/font/google';
+// Locally bundled fontsource fonts (Zero external network requests during build/runtime)
+import '@fontsource/noto-sans/400.css';
+import '@fontsource/noto-sans/500.css';
+import '@fontsource/noto-sans/600.css';
+import '@fontsource/noto-sans/700.css';
+
+import '@fontsource/noto-sans-devanagari/400.css';
+import '@fontsource/noto-sans-devanagari/500.css';
+import '@fontsource/noto-sans-devanagari/600.css';
+import '@fontsource/noto-sans-devanagari/700.css';
+
+import '@fontsource/noto-sans-bengali/400.css';
+import '@fontsource/noto-sans-bengali/500.css';
+import '@fontsource/noto-sans-bengali/600.css';
+import '@fontsource/noto-sans-bengali/700.css';
+
+import '@fontsource/noto-sans-tamil/400.css';
+import '@fontsource/noto-sans-tamil/500.css';
+import '@fontsource/noto-sans-tamil/600.css';
+import '@fontsource/noto-sans-tamil/700.css';
+
 import './globals.css';
 import { ThemeProvider } from '@/components/ThemeProvider';
 import { AuthProvider } from '@/lib/auth-context';
@@ -13,34 +28,6 @@ import { TopHeader } from '@/components/TopHeader';
 import { BottomNav } from '@/components/BottomNav';
 import { SplashScreen } from '@/components/SplashScreen';
 import { PwaRegister } from '@/components/PwaRegister';
-
-const notoSans = Noto_Sans({
-  subsets: ['latin'],
-  weight: ['400', '600', '700', '900'],
-  variable: '--font-noto-sans',
-  display: 'swap',
-});
-
-const notoDevanagari = Noto_Sans_Devanagari({
-  subsets: ['devanagari'],
-  weight: ['400', '600', '700', '900'],
-  variable: '--font-noto-devanagari',
-  display: 'swap',
-});
-
-const notoBengali = Noto_Sans_Bengali({
-  subsets: ['bengali'],
-  weight: ['400', '600', '700', '900'],
-  variable: '--font-noto-bengali',
-  display: 'swap',
-});
-
-const notoTamil = Noto_Sans_Tamil({
-  subsets: ['tamil'],
-  weight: ['400', '600', '700', '900'],
-  variable: '--font-noto-tamil',
-  display: 'swap',
-});
 
 export const metadata: Metadata = {
   title: 'SEVA.AI — National Scheme Assistant',
@@ -70,16 +57,8 @@ export default function RootLayout({
     <html
       lang="en"
       suppressHydrationWarning
-      className={`${notoSans.variable} ${notoDevanagari.variable} ${notoBengali.variable} ${notoTamil.variable} font-scale-normal`}
+      className="font-scale-normal"
     >
-      <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link
-          href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;600;700;900&family=Noto+Sans+Bengali:wght@400;600;700;900&family=Noto+Sans+Devanagari:wght@400;600;700;900&family=Noto+Sans+Tamil:wght@400;600;700;900&display=swap"
-          rel="stylesheet"
-        />
-      </head>
       <body className="antialiased bg-slate-100 dark:bg-[#07101E] text-slate-900 dark:text-slate-100 min-h-screen flex flex-col items-center">
         <ThemeProvider
           attribute="class"
