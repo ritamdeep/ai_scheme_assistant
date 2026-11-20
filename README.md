@@ -163,7 +163,3 @@ This is an independent, unofficial personal project developed for a hackathon de
 - **Offline Mode:** Expanding service worker caching into an offline SQLite database for low-connectivity rural areas.
 
 ---
-
-## Author
-
-Created by **Ritam** ([@ritamdeep](https://github.com/ritamdeep))
