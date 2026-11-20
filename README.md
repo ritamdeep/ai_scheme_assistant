@@ -2,7 +2,7 @@
 
 > A mobile-first, multilingual civic assistant that helps Indian citizens discover government welfare schemes, check preliminary eligibility, and receive clear answers in their native language.
 
-Live Demo: `[Deployment Link Pending]`
+Live Demo: https://ai-scheme-assistant-kjm5.vercel.app/
 
 ---
 
@@ -19,8 +19,8 @@ Information about central government welfare schemes is scattered across multipl
 - **Deterministic Rule Engine:** Completely separated rule-based logic (`lib/rule-engine.ts`) with mathematical threshold checks on age limits, income ceilings, landholding acreage, and occupation categories.
 - **Grounded Multilingual Chat:** RAG retrieval across 15 curated central welfare schemes returning validated, structured responses (summary, financial benefits, document checklist, actionable next steps, and official application URLs).
 - **Language & Script Detection:** Automatic Unicode character analysis for regional scripts and phonetic Hinglish input translation to Devanagari Hindi.
-- **Audio & Voice Capabilities:** Web Speech recognition for voice input, server-side audio transcription fallback, and static `<audio>` playback for pre-generated scheme narrations.
-- **Category Browsing & Bookmarks:** Direct browsing by citizen category (Farmers, Students, Health, Jobs, Business, Housing) without unsolicited badges, plus local bookmarking.
+- **Audio & Voice Capabilities:** Voice input with a server-side transcription fallback; audio playback where pre-generated audio exists only for the PM-KISAN scheme, otherwise browser voices or a server text-to-speech fallback that is limited by free-tier quotas.
+- **Category Browsing & Bookmarks:** Direct browsing by citizen category (Farmers, Students, Health, Women, Senior Citizens, Jobs & Work, Housing) without unsolicited badges, plus local bookmarking.
 - **Mobile-First Experience:** 100dvh splash screen, fixed navigation with 48px touch targets, system-based dark mode, and reduced-motion compliant transitions.
 
 ---
@@ -81,7 +81,7 @@ flowchart TD
 │   └── translations/        # Pre-generated Grade-5 scheme translations (en, hi, bn, ta)
 ├── lib/
 │   ├── rule-engine.ts       # Deterministic eligibility evaluation engine
-│   ├── rag.ts               # Semantic chunk retrieval and fuzzy matching
+│   ├── rag.ts               # Keyword-based chunk retrieval (term-frequency cosine similarity) and fuzzy matching
 │   ├── gemini.ts            # LLM prompts, structured parsing, Hinglish handling
 │   ├── schemes-data.ts      # Curated corpus of 15 central government schemes
 │   └── speech.ts            # Speech synthesis and audio management
@@ -137,8 +137,9 @@ npm run test:engine
 | `GEMINI_API_KEY` | **Yes** | Google Gemini API key for chat synthesis and voice transcription |
 | `GEMINI_MODEL` | No | Primary chat model (Default: `gemini-3.8-flash`) |
 | `GEMINI_FALLBACK_MODEL` | No | Fallback model for rate limit recovery (Default: `gemini-3.5-flash-lite`) |
-| `GEMINI_EMBEDDING_MODEL` | No | Embedding model for semantic retrieval (Default: `gemini-embedding-001`) |
+| `GEMINI_EMBEDDING_MODEL` | No | Reserved for future embedding-based retrieval (Default: `gemini-embedding-001`) |
 | `GEMINI_TTS_MODEL` | No | Text-to-speech model for audio generation script (Default: `gemini-3.8-flash-lite-tts`) |
+| `GEMINI_TTS_FALLBACK_MODEL` | No | Secondary TTS model fallback for audio generation (Default: `gemini-3.8-flash-tts`) |
 | `GROQ_API_KEY` | No | Optional secondary LLM provider fallback |
 | `BHASHINI_API_KEY` | No | Optional Digital India Bhashini API key for speech synthesis |
 | `BHASHINI_USER_ID` | No | Optional Digital India Bhashini user ID |
@@ -153,6 +154,9 @@ This is an independent, unofficial personal project developed for a hackathon de
 
 ## Known Limitations & Future Work
 
+- **Audio Limitations:** Audio playback works in English and Hindi, and pre-generated audio exists only for the PM-KISAN scheme. Bengali and Tamil audio for other schemes was not possible within free-tier text-to-speech quotas (text, chat, and translation work in all four languages).
+- **Retrieval Engine:** Knowledge retrieval is currently keyword-based (term-frequency cosine similarity); dense vector embedding retrieval is planned for future releases.
+- **Serverless In-Memory Cache:** The in-memory response cache only helps within a warm serverless instance and does not persist across cold starts.
 - **Curated Dataset:** Current demonstration corpus contains 15 representative central welfare schemes; expanding to comprehensive state and central schemes is planned.
 - **Additional Languages:** Planned expansion beyond English, Hindi, Bengali, and Tamil to include Telugu, Marathi, Gujarati, Kannada, Odia, and Assamese.
 - **Verified Identity:** Integration with DigiLocker or Aadhaar paperless offline e-KYC for certified eligibility checks.
