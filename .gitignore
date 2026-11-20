@@ -45,3 +45,10 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# local agent instructions & directories
+AGENTS.md
+CLAUDE.md
+.gemini/
+.agent/
+.claude/
